@@ -1,5 +1,6 @@
 import type { Player, Obstacle, Coin, GameState, Level, Sprite, PowerUp } from "./types"
 import { GAME_CONFIG, LEVELS, ASSET_URLS } from "./constants"
+import { SoundSystem } from "./sound-system"
 
 export class GameEngine {
   private canvas: HTMLCanvasElement
@@ -19,6 +20,7 @@ export class GameEngine {
   private animationFrameId: number | null = null
   private images: Map<string, HTMLImageElement> = new Map()
   private onStateChange?: (state: GameState, data?: any) => void
+  private soundSystem: SoundSystem
 
   constructor(canvas: HTMLCanvasElement, onStateChange?: (state: GameState, data?: any) => void) {
     this.canvas = canvas
@@ -26,6 +28,7 @@ export class GameEngine {
     this.onStateChange = onStateChange
     this.currentLevel = LEVELS[0]
     this.player = this.createPlayer()
+    this.soundSystem = new SoundSystem()
     this.setupEventListeners()
     this.preloadImages()
   }
@@ -155,11 +158,13 @@ export class GameEngine {
       const jumpForce = this.player.hasBooster ? GAME_CONFIG.boosterJumpForce : GAME_CONFIG.jumpForce
       this.player.velocity.y = jumpForce
       this.player.canDoubleJump = true
+      this.soundSystem.playJump()
     } else if (this.player.canDoubleJump && this.player.isJumping) {
       // Double jump
       const jumpForce = this.player.hasBooster ? GAME_CONFIG.boosterJumpForce : GAME_CONFIG.jumpForce
       this.player.velocity.y = jumpForce
       this.player.canDoubleJump = false
+      this.soundSystem.playDoubleJump()
     }
   }
 
@@ -177,12 +182,14 @@ export class GameEngine {
   public start() {
     this.gameState = "playing"
     this.onStateChange?.("playing")
+    this.soundSystem.startBackgroundMusic()
     this.gameLoop()
   }
 
   public pause() {
     this.gameState = "paused"
     this.onStateChange?.("paused")
+    this.soundSystem.stopBackgroundMusic()
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId)
       this.animationFrameId = null
@@ -192,6 +199,7 @@ export class GameEngine {
   public resume() {
     this.gameState = "playing"
     this.onStateChange?.("playing")
+    this.soundSystem.startBackgroundMusic()
     this.gameLoop()
   }
 
@@ -368,6 +376,7 @@ export class GameEngine {
       if (this.isColliding(this.player, obstacle)) {
         this.player.lives--
         this.obstacles = this.obstacles.filter((o) => o !== obstacle)
+        this.soundSystem.playCollision()
 
         if (this.player.lives <= 0) {
           this.gameOver()
@@ -381,6 +390,7 @@ export class GameEngine {
         this.player.coins++
         this.player.score += 5
         this.coins = this.coins.filter((c) => c !== coin)
+        this.soundSystem.playCoinCollect()
       }
     }
 
@@ -391,6 +401,7 @@ export class GameEngine {
           this.player.hasBooster = true
           this.player.boosterDuration = 300
           this.player.score += 20
+          this.soundSystem.playPowerUp()
         }
         this.powerups = this.powerups.filter((p) => p !== powerup)
       }
@@ -411,6 +422,7 @@ export class GameEngine {
       if (!checkpoint.reached && this.distance >= checkpoint.distance) {
         if (!checkpoint.coinsRequired || this.player.coins >= checkpoint.coinsRequired) {
           checkpoint.reached = true
+          this.soundSystem.playCheckpoint()
           this.onStateChange?.("playing", { checkpoint })
         }
       }
@@ -419,6 +431,8 @@ export class GameEngine {
 
   private completeLevel() {
     this.gameState = "levelcomplete"
+    this.soundSystem.playLevelComplete()
+    this.soundSystem.stopBackgroundMusic()
     this.onStateChange?.("levelcomplete", {
       level: this.currentLevel,
       score: this.player.score,
@@ -432,6 +446,8 @@ export class GameEngine {
 
   private gameOver() {
     this.gameState = "gameover"
+    this.soundSystem.playGameOver()
+    this.soundSystem.stopBackgroundMusic()
     this.onStateChange?.("gameover", {
       score: this.player.score,
       coins: this.player.coins,
@@ -464,7 +480,7 @@ export class GameEngine {
     }
     this.ctx.setLineDash([])
 
-    this.obstacles.forEach((obstacle) => this.drawSprite(obstacle))
+    this.obstacles.forEach((obstacle) => this.drawObstacleWithDanger(obstacle))
 
     this.coins.forEach((coin) => this.drawCoin(coin))
 
@@ -479,6 +495,69 @@ export class GameEngine {
     this.ctx.shadowBlur = 0
 
     this.drawHUD()
+  }
+
+  private drawObstacleWithDanger(obstacle: Obstacle) {
+    // Draw pulsing red glow around obstacle
+    const pulseIntensity = Math.sin(this.frameCount * 0.1) * 0.3 + 0.7
+
+    // Red danger glow
+    this.ctx.shadowColor = "#FF0000"
+    this.ctx.shadowBlur = 20 * pulseIntensity
+
+    // Draw red warning border
+    this.ctx.strokeStyle = "#FF0000"
+    this.ctx.lineWidth = 3
+    this.ctx.strokeRect(
+      obstacle.position.x - 5,
+      obstacle.position.y - 5,
+      obstacle.size.width + 10,
+      obstacle.size.height + 10,
+    )
+
+    // Draw diagonal danger stripes on obstacle
+    this.ctx.save()
+    this.ctx.fillStyle = "rgba(255, 0, 0, 0.3)"
+    this.ctx.beginPath()
+    const stripeWidth = 8
+    for (let i = -obstacle.size.height; i < obstacle.size.width; i += stripeWidth * 2) {
+      this.ctx.moveTo(obstacle.position.x + i, obstacle.position.y + obstacle.size.height)
+      this.ctx.lineTo(obstacle.position.x + i + obstacle.size.height, obstacle.position.y)
+      this.ctx.lineTo(obstacle.position.x + i + obstacle.size.height + stripeWidth, obstacle.position.y)
+      this.ctx.lineTo(obstacle.position.x + i + stripeWidth, obstacle.position.y + obstacle.size.height)
+    }
+    this.ctx.closePath()
+    this.ctx.fill()
+    this.ctx.restore()
+
+    // Draw the actual obstacle sprite
+    this.drawSprite(obstacle)
+
+    // Draw warning symbol on top
+    this.ctx.shadowBlur = 0
+    this.ctx.fillStyle = "#FFFF00"
+    this.ctx.strokeStyle = "#FF0000"
+    this.ctx.lineWidth = 2
+
+    // Draw exclamation mark
+    const centerX = obstacle.position.x + obstacle.size.width / 2
+    const centerY = obstacle.position.y - 15
+
+    // Triangle background
+    this.ctx.beginPath()
+    this.ctx.moveTo(centerX, centerY - 12)
+    this.ctx.lineTo(centerX - 10, centerY + 8)
+    this.ctx.lineTo(centerX + 10, centerY + 8)
+    this.ctx.closePath()
+    this.ctx.fill()
+    this.ctx.stroke()
+
+    // Exclamation mark
+    this.ctx.fillStyle = "#FF0000"
+    this.ctx.font = "bold 14px Arial"
+    this.ctx.textAlign = "center"
+    this.ctx.textBaseline = "middle"
+    this.ctx.fillText("!", centerX, centerY - 2)
   }
 
   private drawSprite(sprite: Sprite) {
@@ -596,10 +675,19 @@ export class GameEngine {
     return this.gameState
   }
 
+  public toggleSound() {
+    return this.soundSystem.toggleMute()
+  }
+
+  public getSoundState() {
+    return !this.soundSystem.getMuteState()
+  }
+
   public destroy() {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId)
     }
+    this.soundSystem.destroy()
     window.removeEventListener("keydown", () => {})
     window.removeEventListener("keyup", () => {})
   }

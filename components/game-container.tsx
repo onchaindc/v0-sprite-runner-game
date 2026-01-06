@@ -18,6 +18,7 @@ export function GameContainer() {
     selectedLevel,
     gameOverData,
     levelCompleteData,
+    restartKey,
     handleStartGame,
     handleSelectLevel,
     handleGameOver,
@@ -75,7 +76,7 @@ export function GameContainer() {
         <h2 className="text-2xl font-bold">{LEVELS[selectedLevel].name}</h2>
       </div>
 
-      <GameCanvas onGameOver={handleGameOver} onLevelComplete={handleLevelComplete} />
+      <GameCanvas key={restartKey} onGameOver={handleGameOver} onLevelComplete={handleLevelComplete} />
 
       {gameOverData && (
         <GameOverModal

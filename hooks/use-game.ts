@@ -16,18 +16,21 @@ export function useGame() {
     score: number
     coins: number
   } | null>(null)
+  const [restartKey, setRestartKey] = useState(0)
 
   const handleStartGame = useCallback(() => {
-    setCurrentView("playing")
     setGameOverData(null)
     setLevelCompleteData(null)
+    setCurrentView("playing")
+    setRestartKey((prev) => prev + 1)
   }, [])
 
   const handleSelectLevel = useCallback((levelIndex: number) => {
     setSelectedLevel(levelIndex)
-    setCurrentView("playing")
     setGameOverData(null)
     setLevelCompleteData(null)
+    setCurrentView("playing")
+    setRestartKey((prev) => prev + 1)
   }, [])
 
   const handleGameOver = useCallback((data: { score: number; coins: number; distance: number }) => {
@@ -37,7 +40,6 @@ export function useGame() {
   const handleLevelComplete = useCallback((data: { level: any; score: number; coins: number }) => {
     setLevelCompleteData(data)
 
-    // Unlock next level
     const nextLevelIndex = LEVELS.findIndex((l) => l.id === data.level.id)
     if (nextLevelIndex >= 0 && nextLevelIndex + 1 < LEVELS.length) {
       setUnlockedLevels((prev) => Math.max(prev, nextLevelIndex + 1))
@@ -79,6 +81,7 @@ export function useGame() {
       if (nextLevelIndex < LEVELS.length) {
         setSelectedLevel(nextLevelIndex)
         setLevelCompleteData(null)
+        setRestartKey((prev) => prev + 1)
         setCurrentView("playing")
       }
     }
@@ -90,6 +93,7 @@ export function useGame() {
     selectedLevel,
     gameOverData,
     levelCompleteData,
+    restartKey,
     handleStartGame,
     handleSelectLevel,
     handleGameOver,

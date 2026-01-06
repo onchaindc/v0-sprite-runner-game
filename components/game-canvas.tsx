@@ -6,7 +6,7 @@ import { LifeSystem } from "@/lib/game/life-system"
 import type { GameState } from "@/lib/game/types"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Pause, Play, RotateCcw, Trophy, Coins, Heart, Zap } from "lucide-react"
+import { Pause, Play, RotateCcw, Trophy, Coins, Heart, Zap, Volume2, VolumeX } from "lucide-react"
 
 interface GameCanvasProps {
   onGameOver?: (data: { score: number; coins: number; distance: number }) => void
@@ -22,6 +22,7 @@ export function GameCanvas({ onGameOver, onLevelComplete }: GameCanvasProps) {
   const [checkpointNotification, setCheckpointNotification] = useState<string | null>(null)
   const [systemLives, setSystemLives] = useState(5)
   const [timeUntilNextLife, setTimeUntilNextLife] = useState(0)
+  const [soundEnabled, setSoundEnabled] = useState(true)
 
   const handleStart = () => {
     if (lifeSystemRef.current.getCurrentLives() <= 0) {
@@ -43,6 +44,13 @@ export function GameCanvas({ onGameOver, onLevelComplete }: GameCanvasProps) {
 
   const handleReset = () => {
     engineRef.current?.reset()
+  }
+
+  const handleToggleSound = () => {
+    if (engineRef.current) {
+      const newState = engineRef.current.toggleSound()
+      setSoundEnabled(!newState)
+    }
   }
 
   const formatTime = (ms: number) => {
@@ -131,6 +139,15 @@ export function GameCanvas({ onGameOver, onLevelComplete }: GameCanvasProps) {
           </div>
 
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleSound}
+              className="gap-2 bg-transparent"
+              title={soundEnabled ? "Mute" : "Unmute"}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </Button>
             {gameState === "playing" || gameState === "paused" ? (
               <>
                 <Button size="sm" variant="outline" onClick={handlePause} className="gap-2 bg-transparent">
