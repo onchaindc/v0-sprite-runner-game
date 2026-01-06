@@ -1,13 +1,11 @@
-"use client"
-
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, CheckCircle, ExternalLink } from "lucide-react"
 import { useState } from "react"
 import { usePayToReveal } from "@/hooks/use-pay-to-reveal"
-import { useAccount, useConnect } from "wagmi"
-import sdk from "@farcaster/frame-sdk"
+import { useAccount, useConnect } from "wagmi" // Wagmi for wallet connection
+import { ethers } from 'ethers'; // Import ethers.js
 import { PAYMENT_CONFIG } from "@/lib/farcaster/config"
 
 interface GameOverModalProps {
@@ -22,26 +20,49 @@ interface GameOverModalProps {
 export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSubmitScore }: GameOverModalProps) {
   const [playerName, setPlayerName] = useState("")
   const [submitted, setSubmitted] = useState(false)
-  const { isRevealed, isProcessing, error, payToReveal, isConnected, needsPayment, transactionHash } = usePayToReveal()
-  const { address } = useAccount()
-  const { connect, connectors } = useConnect()
+  const { isRevealed, isProcessing, error, payToReveal, needsPayment, transactionHash } = usePayToReveal()
+  
+  // Use Wagmi's useAccount to check if the wallet is connected
+  const { address, isConnected } = useAccount(); // This hook gives you the wallet connection status
+  
+  const { connect, connectors } = useConnect(); // Wagmi hook to connect wallet
 
+  // Connect wallet logic using Wagmi
   const handleConnectWallet = async () => {
     try {
-      await sdk.wallet.ethProvider.request({
-        method: "eth_requestAccounts",
-      })
-      console.log("[v0] Wallet connected via Farcaster")
-
-      // If connectors are available, use them as fallback
+      // Connect using the first available connector (e.g., MetaMask, WalletConnect)
       if (connectors.length > 0) {
-        connect({ connector: connectors[0] })
+        await connect({ connector: connectors[0] });
+        console.log("[v0] Wallet connected using Wagmi");
       }
     } catch (err) {
-      console.error("[v0] Failed to connect wallet:", err)
+      console.error("[v0] Failed to connect wallet:", err);
     }
   }
 
+  // Handle the "Play Again" button click and send the payment to your wallet
+  const handlePlayAgain = async () => {
+    if (!isConnected) {
+      // Connect wallet if not connected
+      await handleConnectWallet();
+    } else {
+      try {
+        // Send ETH to your wallet address using ethers.js
+        const provider = new ethers.JsonRpcProvider('https://rpc-url-for-network'); // Replace with correct network RPC URL
+        const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider); // Replace with your private key
+
+        const tx = await wallet.sendTransaction({
+          to: '0xe00ecb51e1ba79731e78d443a90e3ad200107c4b', // Your wallet address to receive the payment
+          value: ethers.parseUnits(PAYMENT_CONFIG.PAYMENT_AMOUNT, "ether"), // Amount to send in ETH (convert to Wei)
+        });
+        console.log("Transaction sent:", tx);
+      } catch (error) {
+        console.error("Error during payment transaction:", error);
+      }
+    }
+  }
+
+  // Handle score submission
   const handleSubmit = () => {
     if (playerName.trim()) {
       onSubmitScore(playerName.trim())
@@ -49,6 +70,7 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
     }
   }
 
+  // Show score gate when payment is required
   const showScoreGate = needsPayment && !isRevealed
 
   return (
@@ -160,7 +182,7 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
         )}
 
         <div className="flex gap-3">
-          <Button onClick={onRestart} className="flex-1 gap-2">
+          <Button onClick={handlePlayAgain} className="flex-1 gap-2">
             <RotateCcw className="w-4 h-4" /> Play Again
           </Button>
           <Button onClick={onMenu} variant="outline" className="flex-1 gap-2 bg-transparent">
