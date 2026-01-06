@@ -1,8 +1,0 @@
-{
-  "version": "1",
-  "name": "Sprite Runner",
-  "iconUrl": "https://your-domain.vercel.app/game-icon.png",
-  "splashImageUrl": "https://your-domain.vercel.app/splash-screen.png",
-  "splashBackgroundColor": "#1e40af",
-  "homeUrl": "https://your-domain.vercel.app"
-}

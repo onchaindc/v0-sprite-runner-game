@@ -1,0 +1,9 @@
+{
+  "name": "Sprite Runner Game",
+  "description": "A fun game that integrates with Farcaster",
+  "icon": "https://v0-sprite-runner-game.vercel.app/icon.png",  
+  "start_url": "https://v0-sprite-runner-game.vercel.app/",  
+  "provider": "Farcaster",
+  "background_color": "#ffffff",  
+  "theme_color": "#ff5733"  
+}
