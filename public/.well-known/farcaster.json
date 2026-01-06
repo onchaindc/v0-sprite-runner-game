@@ -1,9 +1,17 @@
 {
-  "name": "Sprite Runner Game",
-  "description": "A fun game that integrates with Farcaster",
-  "icon": "https://v0-sprite-runner-game.vercel.app/icon.png",  
-  "start_url": "https://v0-sprite-runner-game.vercel.app/",  
-  "provider": "Farcaster",
-  "background_color": "#ffffff",  
-  "theme_color": "#ff5733"  
+  "header": {
+    "alg": "RS256",
+    "typ": "JWT",
+    "kid": "<your_farcaster_account_id>"
+  },
+  "payload": {
+    "name": "Sprite Runner Game",
+    "description": "A fun game that integrates with Farcaster",
+    "icon": "https://v0-sprite-runner-game.vercel.app/icon.png",
+    "start_url": "https://v0-sprite-runner-game.vercel.app/",
+    "provider": "Farcaster",
+    "background_color": "#ffffff",
+    "theme_color": "#ff5733"
+  },
+  "signature": "<your_generated_signature>"
 }
