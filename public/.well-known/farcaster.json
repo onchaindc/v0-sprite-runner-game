@@ -2,7 +2,7 @@
   "header": {
     "alg": "RS256",
     "typ": "JWT",
-    "kid": "<your_farcaster_account_id>"
+    "kid": "<983166>"
   },
   "payload": {
     "name": "Sprite Runner Game",
