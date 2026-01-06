@@ -1,11 +1,8 @@
-"use client";
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { useEffect } from "react";
-import { sdk } from "@farcaster/miniapp-sdk";
 import "./globals.css";
+import FarcasterReady from "./farcaster-ready";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -35,16 +32,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  useEffect(() => {
-    sdk.actions.ready();
-  }, []);
-
+}) {
   return (
     <html lang="en">
       <body className="font-sans antialiased">
+        <FarcasterReady />
         {children}
         <Analytics />
       </body>
