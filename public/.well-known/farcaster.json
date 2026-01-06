@@ -1,0 +1,20 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Sprite Runner",
+    "iconUrl": "https://v0-sprite-runner-game.vercel.app//icon.png",
+    "homeUrl": "https://v0-sprite-runner-game.vercel.app/",
+    "description": "Dodge obstacles and pay to reveal your score",
+    "tags": ["game", "onchain"],
+    "chainIds": ["eip155:10"],
+    "developer": {
+      "name": "onchaindc",
+      "url": "https://v0-sprite-runner-game.vercel.app"
+    }
+  }
+}
