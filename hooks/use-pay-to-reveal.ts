@@ -1,111 +1,69 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useWalletClient, useSwitchChain, useChainId, usePublicClient } from "wagmi";
+import { useAccount, useConnect, useSendTransaction } from "wagmi";
 import { parseEther } from "viem";
-import { base } from "wagmi/chains";
-import { useFarcaster } from "@/lib/farcaster/farcaster-provider";
-import { PAYMENT_CONFIG } from "@/lib/farcaster/config";
+
+// Your wallet address
+const RECIPIENT_ADDRESS = "0xE00Ecb51e1bA79731E78D443A90e3AD200107c4b";
+const PAYMENT_AMOUNT = "0.00001"; // ETH
 
 interface UsePayToRevealReturn {
   isRevealed: boolean;
   isProcessing: boolean;
   error: string | null;
+  txHash: string | null;
   payToReveal: () => Promise<void>;
-  isConnected: boolean;
-  needsPayment: boolean;
-  transactionHash: string | null;
 }
 
 export function usePayToReveal(): UsePayToRevealReturn {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
-  const { isInFarcaster } = useFarcaster();
-  const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();  // Ensure this is initialized properly
-  const { switchChain } = useSwitchChain();
-  const currentChainId = useChainId();
-
-  const needsPayment = isInFarcaster && !isRevealed;
+  const { isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { sendTransaction, data } = useSendTransaction();
 
   const payToReveal = async () => {
-    if (!isInFarcaster) {
-      // If not in Farcaster, reveal immediately
-      setIsRevealed(true);
-      return;
-    }
+    setError(null);
 
-    if (!isConnected || !walletClient) {
-      setError("Please connect your wallet first");
-      return;
+    // Connect wallet
+    if (!isConnected) {
+      const connector = connectors?.[0];
+      if (!connector) {
+        setError("No wallet connector available");
+        return;
+      }
+      await connect({ connector });
     }
 
     setIsProcessing(true);
-    setError(null);
 
     try {
-      // If not on the right network, switch to Base network
-      if (currentChainId !== base.id) {
-        console.log("[v0] Switching to Base network...");
-        await switchChain({ chainId: base.id });
-      }
-
-      console.log("[v0] Sending payment transaction...");
-
-      // Send transaction
-      const hash = await walletClient.sendTransaction({
-        to: PAYMENT_CONFIG.RECIPIENT_ADDRESS,
-        value: parseEther(PAYMENT_CONFIG.PAYMENT_AMOUNT),
-        chain: base,
+      // Fire the transaction
+      await sendTransaction({
+        to: RECIPIENT_ADDRESS,
+        value: parseEther(PAYMENT_AMOUNT),
       });
 
-      console.log("[v0] Transaction sent:", hash);
-      setTransactionHash(hash);
+      // Wagmi stores the tx hash in `data` (string | undefined)
+      if (!data) throw new Error("Transaction hash not found");
+      setTxHash(data);
 
-      // Wait for the transaction confirmation using publicClient
-      if (publicClient) {
-        console.log("[v0] Waiting for transaction confirmation...");
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash,
-          confirmations: 1,
-        });
-
-        if (receipt.status === "success") {
-          console.log("[v0] Payment confirmed, score revealed");
-          setIsRevealed(true);
-        } else {
-          throw new Error("Transaction failed");
-        }
-      } else {
-        // Fallback: wait briefly and reveal (for testing)
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        setIsRevealed(true);
-      }
+      // Reveal after success
+      setIsRevealed(true);
     } catch (err: any) {
-      console.error("[v0] Payment error:", err);
-      if (err.message?.includes("User rejected")) {
+      if (err?.message?.includes("User rejected")) {
         setError("Transaction was cancelled");
-      } else if (err.message?.includes("insufficient funds")) {
-        setError("Insufficient funds for transaction");
       } else {
-        setError(err.shortMessage || err.message || "Transaction failed");
+        setError(err?.message || "Transaction failed");
       }
     } finally {
       setIsProcessing(false);
     }
   };
 
-  return {
-    isRevealed,
-    isProcessing,
-    error,
-    payToReveal,
-    isConnected,
-    needsPayment,
-    transactionHash,
-  };
+  return { isRevealed, isProcessing, error, txHash, payToReveal };
 }
