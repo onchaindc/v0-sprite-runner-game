@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Add this line to mark this as a client component
 
 import type React from "react";
 import type { Metadata } from "next";
