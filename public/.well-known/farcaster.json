@@ -11,7 +11,7 @@
     "homeUrl": "https://v0-sprite-runner-game.vercel.app/",
     "splashImageUrl": "https://v0-sprite-runner-game.vercel.app/icon.png",
     "splashBackgroundColor": "#ffffff",
-    "subtitle": "Play Sprite Runner in Farcaster!",
+    "subtitle": "Sprite Runner in Farcaster!",
     "description": "Unlock your score with ETH payments and compete!",
     "screenshotUrls": [
       "https://v0-sprite-runner-game.vercel.app/screenshot1.png",
@@ -25,7 +25,7 @@
       "competition"
     ],
     "heroImageUrl": "https://v0-sprite-runner-game.vercel.app/og.png",
-    "tagline": "The sprite running experience on Farcaster!",
+    "tagline": "sprite runner on Farcaster!",
     "ogTitle": "Sprite Runner Game",
     "ogDescription": "Play Sprite Runner and reveal your score on Base!",
     "ogImageUrl": "https://v0-sprite-runner-game.vercel.app/og.png"
