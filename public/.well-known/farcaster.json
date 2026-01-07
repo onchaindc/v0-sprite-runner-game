@@ -4,14 +4,30 @@
     "payload": "eyJkb21haW4iOiJ2MC1zcHJpdGUtcnVubmVyLWdhbWUudmVyY2VsLmFwcCJ9",
     "signature": "nHKPwjcJI7zbSZnRRxYHBnd6rP+0K/Hl/H1xkaZDKdk9DYiVMu68tA6HH68CBIJ0Nh+mzckQY79ZS2/4SIa6LBw="
   },
-  "frame": {
+  "miniapp": {
     "version": "1",
     "name": "Sprite Runner Game",
     "iconUrl": "https://v0-sprite-runner-game.vercel.app/icon.png",
     "homeUrl": "https://v0-sprite-runner-game.vercel.app/",
-    "imageUrl": "https://v0-sprite-runner-game.vercel.app/opengraph-image.png",
-    "buttonTitle": "Quick Start",
     "splashImageUrl": "https://v0-sprite-runner-game.vercel.app/icon.png",
-    "splashBackgroundColor": "#ffffff"
+    "splashBackgroundColor": "#ffffff",
+    "subtitle": "Play Sprite Runner in Farcaster!",
+    "description": "Unlock your score with ETH payments and compete!",
+    "screenshotUrls": [
+      "https://v0-sprite-runner-game.vercel.app/screenshot1.png",
+      "https://v0-sprite-runner-game.vercel.app/screenshot2.png"
+    ],
+    "primaryCategory": "games",
+    "tags": [
+      "runner",
+      "game",
+      "score",
+      "competition"
+    ],
+    "heroImageUrl": "https://v0-sprite-runner-game.vercel.app/og.png",
+    "tagline": "The sprite running experience on Farcaster!",
+    "ogTitle": "Sprite Runner Game",
+    "ogDescription": "Play Sprite Runner and reveal your score on Base!",
+    "ogImageUrl": "https://v0-sprite-runner-game.vercel.app/og.png"
   }
 }
