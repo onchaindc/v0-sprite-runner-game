@@ -1,25 +1,25 @@
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, CheckCircle, ExternalLink } from "lucide-react"
-import { useState } from "react"
-import { usePayToReveal } from "@/hooks/use-pay-to-reveal"
-import { useAccount, useConnect } from "wagmi" // Wagmi for wallet connection
-import { PAYMENT_CONFIG } from "@/lib/farcaster/config"
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, CheckCircle, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { usePayToReveal } from "@/hooks/use-pay-to-reveal"; // Importing custom hook for payment logic
+import { useAccount, useConnect } from "wagmi"; // Wagmi for wallet connection
+import { PAYMENT_CONFIG } from "@/lib/farcaster/config";
 
 interface GameOverModalProps {
-  score: number
-  coins: number
-  distance: number
-  onRestart: () => void
-  onMenu: () => void
-  onSubmitScore: (playerName: string) => void
+  score: number;
+  coins: number;
+  distance: number;
+  onRestart: () => void;
+  onMenu: () => void;
+  onSubmitScore: (playerName: string) => void;
 }
 
 export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSubmitScore }: GameOverModalProps) {
-  const [playerName, setPlayerName] = useState("")
-  const [submitted, setSubmitted] = useState(false)
-  const { isRevealed, isProcessing, error, payToReveal, needsPayment, transactionHash } = usePayToReveal()
+  const [playerName, setPlayerName] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const { isRevealed, isProcessing, error, payToReveal, needsPayment, transactionHash } = usePayToReveal();
 
   // Use Wagmi's useAccount to check if the wallet is connected
   const { address, isConnected } = useAccount(); // This hook gives you the wallet connection status
@@ -35,29 +35,30 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
     } catch (err) {
       console.error("[v0] Failed to connect wallet:", err);
     }
-  }
+  };
 
   // Handle the "Play Again" button click and send the payment to your wallet
   const handlePlayAgain = async () => {
     if (!isConnected) {
-      // Connect wallet if not connected
+      // If wallet is not connected, connect it
       await handleConnectWallet();
     } else {
-      // Proceed with the payment and reveal score
-      payToReveal(); // Calling the payment logic from the `use-pay-to-reveal.ts` hook
+      // If wallet is connected, trigger the payment process
+      console.log("Starting payment process...");
+      await payToReveal(); // Calling the payment function from the custom hook
     }
-  }
+  };
 
   // Handle score submission
   const handleSubmit = () => {
     if (playerName.trim()) {
-      onSubmitScore(playerName.trim())
-      setSubmitted(true)
+      onSubmitScore(playerName.trim());
+      setSubmitted(true);
     }
-  }
+  };
 
   // Show score gate when payment is required
-  const showScoreGate = needsPayment && !isRevealed
+  const showScoreGate = needsPayment && !isRevealed;
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
