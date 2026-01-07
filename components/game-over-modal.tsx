@@ -5,7 +5,6 @@ import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, CheckCircle, Externa
 import { useState } from "react"
 import { usePayToReveal } from "@/hooks/use-pay-to-reveal"
 import { useAccount, useConnect } from "wagmi" // Wagmi for wallet connection
-import { ethers } from 'ethers'; // Import ethers.js
 import { PAYMENT_CONFIG } from "@/lib/farcaster/config"
 
 interface GameOverModalProps {
@@ -21,16 +20,14 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
   const [playerName, setPlayerName] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const { isRevealed, isProcessing, error, payToReveal, needsPayment, transactionHash } = usePayToReveal()
-  
+
   // Use Wagmi's useAccount to check if the wallet is connected
   const { address, isConnected } = useAccount(); // This hook gives you the wallet connection status
-  
   const { connect, connectors } = useConnect(); // Wagmi hook to connect wallet
 
   // Connect wallet logic using Wagmi
   const handleConnectWallet = async () => {
     try {
-      // Connect using the first available connector (e.g., MetaMask, WalletConnect)
       if (connectors.length > 0) {
         await connect({ connector: connectors[0] });
         console.log("[v0] Wallet connected using Wagmi");
@@ -46,19 +43,8 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
       // Connect wallet if not connected
       await handleConnectWallet();
     } else {
-      try {
-        // Send ETH to your wallet address using ethers.js
-        const provider = new ethers.JsonRpcProvider('https://rpc-url-for-network'); // Replace with correct network RPC URL
-        const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider); // Replace with your private key
-
-        const tx = await wallet.sendTransaction({
-          to: '0xe00ecb51e1ba79731e78d443a90e3ad200107c4b', // Your wallet address to receive the payment
-          value: ethers.parseUnits(PAYMENT_CONFIG.PAYMENT_AMOUNT, "ether"), // Amount to send in ETH (convert to Wei)
-        });
-        console.log("Transaction sent:", tx);
-      } catch (error) {
-        console.error("Error during payment transaction:", error);
-      }
+      // Proceed with the payment and reveal score
+      payToReveal(); // Calling the payment logic from the `use-pay-to-reveal.ts` hook
     }
   }
 
@@ -105,12 +91,9 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
                     <div className="font-medium mb-1">Connected Wallet</div>
                     <div className="truncate font-mono">{address}</div>
                   </div>
-                  <Button onClick={payToReveal} disabled={isProcessing} className="w-full" size="lg">
+                  <Button onClick={handlePlayAgain} disabled={isProcessing} className="w-full" size="lg">
                     {isProcessing ? (
-                      <>
-                        <span className="animate-spin mr-2">⏳</span>
-                        Processing Transaction...
-                      </>
+                      <span className="animate-spin mr-2">⏳</span>
                     ) : (
                       <>Pay {PAYMENT_CONFIG.PAYMENT_AMOUNT} ETH to Reveal</>
                     )}
@@ -130,59 +113,33 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
             </div>
           </div>
         ) : (
-          <>
-            {isRevealed && needsPayment && (
-              <div className="bg-green-50 border border-green-200 p-3 rounded-lg flex items-center gap-2 text-green-800 text-sm">
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                <span>Payment confirmed! Your score is now unlocked.</span>
+          <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-600" />
+                <span className="font-medium">Score</span>
               </div>
-            )}
-
-            <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-600" />
-                  <span className="font-medium">Score</span>
-                </div>
-                <span className="text-xl font-bold">{score}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-yellow-500" />
-                  <span className="font-medium">Coins</span>
-                </div>
-                <span className="text-xl font-bold">{coins}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Map className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium">Distance</span>
-                </div>
-                <span className="text-xl font-bold">{distance}m</span>
-              </div>
+              <span className="text-xl font-bold">{score}</span>
             </div>
-
-            {!submitted ? (
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Save your score to leaderboard</label>
-                <Input
-                  placeholder="Enter your name"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                />
-                <Button onClick={handleSubmit} className="w-full" disabled={!playerName.trim()}>
-                  Submit Score
-                </Button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Coins className="w-5 h-5 text-yellow-500" />
+                <span className="font-medium">Coins</span>
               </div>
-            ) : (
-              <div className="text-center text-green-600 font-medium">Score saved successfully!</div>
-            )}
-          </>
+              <span className="text-xl font-bold">{coins}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Map className="w-5 h-5 text-blue-600" />
+                <span className="font-medium">Distance</span>
+              </div>
+              <span className="text-xl font-bold">{distance}m</span>
+            </div>
+          </div>
         )}
 
         <div className="flex gap-3">
-          <Button onClick={handlePlayAgain} className="flex-1 gap-2">
+          <Button onClick={onRestart} className="flex-1 gap-2">
             <RotateCcw className="w-4 h-4" /> Play Again
           </Button>
           <Button onClick={onMenu} variant="outline" className="flex-1 gap-2 bg-transparent">
@@ -191,5 +148,5 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
         </div>
       </Card>
     </div>
-  )
+  );
 }
