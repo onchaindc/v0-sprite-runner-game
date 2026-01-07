@@ -8,6 +8,7 @@
     "version": "1",
     "name": "Sprite Runner Game",
     "iconUrl": "https://v0-sprite-runner-game.vercel.app/icon.png",
+    "immageUrl": "https://v0-sprite-runner-game.vercel.app/og.png",
     "homeUrl": "https://v0-sprite-runner-game.vercel.app/",
     "splashImageUrl": "https://v0-sprite-runner-game.vercel.app/icon.png",
     "splashBackgroundColor": "#ffffff",
