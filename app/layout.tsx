@@ -1,15 +1,17 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
-import { WagmiProvider } from "wagmi"
-import { QueryClientProvider } from "@tanstack/react-query"
-import { wagmiConfig, queryClient } from "@/lib/farcaster/wagmi-config"
-import { FarcasterProvider } from "@/lib/farcaster/farcaster-provider"
+import type React from "react";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
+import { WagmiProvider } from "wagmi";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { wagmiConfig, queryClient } from "@/lib/farcaster/wagmi-config";
+import { FarcasterProvider } from "@/lib/farcaster/farcaster-provider";
+import sdk from "@farcaster/miniapp-sdk"; // Import Farcaster SDK
+import { useEffect } from "react";
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Sprite Runner - Farcaster Mini App",
@@ -39,13 +41,26 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    async function initializeApp() {
+      try {
+        // Inform Farcaster that the app is ready to display
+        await sdk.actions.ready();
+        console.log("[Farcaster] App is now ready!");
+      } catch (error) {
+        console.error("[Farcaster] Error during app initialization:", error);
+      }
+    }
+    initializeApp();
+  }, []); // This effect runs once when the component is mounted
+
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
@@ -57,5 +72,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
