@@ -3,8 +3,10 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
+
 import { WagmiProvider } from "wagmi"
 import { QueryClientProvider } from "@tanstack/react-query"
+
 import { wagmiConfig, queryClient } from "@/lib/farcaster/wagmi-config"
 import { FarcasterProvider } from "@/lib/farcaster/farcaster-provider"
 
@@ -16,11 +18,20 @@ export const metadata: Metadata = {
   description: "Play the endless runner game and compete on the leaderboard",
   generator: "v0.app",
   other: {
-    "fc:frame": "vNext",
-    "fc:frame:image": "https://your-domain.com/og-image.png",
-    "fc:frame:button:1": "Play Game",
-    "fc:frame:button:1:action": "link",
-    "fc:frame:button:1:target": "https://your-domain.com",
+    "fc:miniapp": JSON.stringify({
+      version: "1",
+      imageUrl: "https://v0-sprite-runner-game.vercel.app/og-image.png",
+      button: {
+        title: "Play Game",
+        action: {
+          type: "launch_frame",
+          name: "Sprite Runner",
+          url: "https://v0-sprite-runner-game.vercel.app/",
+          splashImageUrl: "https://v0-sprite-runner-game.vercel.app/icon.png",
+          splashBackgroundColor: "#FFF7ED",
+        },
+      },
+    }),
   },
   icons: {
     icon: [
@@ -48,12 +59,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
-        <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
-            <FarcasterProvider>{children}</FarcasterProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
+      <body className="font-sans antialiased">
+        {/* Farcaster MUST initialize first */}
+        <FarcasterProvider>
+          <WagmiProvider config={wagmiConfig}>
+            <QueryClientProvider client={queryClient}>
+              {children}
+            </QueryClientProvider>
+          </WagmiProvider>
+        </FarcasterProvider>
+
         <Analytics />
       </body>
     </html>
