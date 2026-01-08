@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Sprite Runner - Farcaster Mini App",
   description: "Play the endless runner game and compete on the leaderboard",
   generator: "v0.app",
-  other: {
+  other: {"base:app_id": "695ef0cf646908900bbdae0e",
     "fc:miniapp": JSON.stringify({
       version: "1",
       imageUrl: "https://v0-sprite-runner-game.vercel.app/og-image.png",
