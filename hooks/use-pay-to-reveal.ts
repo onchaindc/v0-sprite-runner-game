@@ -13,6 +13,8 @@ interface UsePayToRevealReturn {
   error: string | null;
   txHash: string | null;
   payToReveal: () => Promise<void>;
+  resetPaymentState: () => void;
+  needsPayment: boolean;
 }
 
 export function usePayToReveal(): UsePayToRevealReturn {
@@ -29,16 +31,16 @@ export function usePayToReveal(): UsePayToRevealReturn {
     setError(null);
 
     try {
-      // Ensure wallet is connected (Farcaster handles UI)
+      // Ensure wallet is connected
       if (!isConnected) {
         const connector = connectors?.[0];
-        if (!connector) throw new Error("No wallet connector");
+        if (!connector) throw new Error("No wallet connector found");
         await connect({ connector });
       }
 
       setIsProcessing(true);
 
-      // 🔥 THIS LINE TRIGGERS THE FARCASTER WALLET POPUP
+      // Trigger Farcaster/Wagmi wallet popup
       const hash = await sendTransactionAsync({
         to: RECIPIENT_ADDRESS,
         value: parseEther(PAYMENT_AMOUNT),
@@ -57,5 +59,16 @@ export function usePayToReveal(): UsePayToRevealReturn {
     }
   };
 
-  return { isRevealed, isProcessing, error, txHash, payToReveal };
+  // 🔹 Reset state for next game round
+  const resetPaymentState = () => {
+    setIsRevealed(false);
+    setTxHash(null);
+    setError(null);
+    setIsProcessing(false);
+  };
+
+  // Always true for now; could be conditional based on your game rules
+  const needsPayment = true;
+
+  return { isRevealed, isProcessing, error, txHash, payToReveal, resetPaymentState, needsPayment };
 }

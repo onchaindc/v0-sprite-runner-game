@@ -1,10 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, CheckCircle, ExternalLink } from "lucide-react";
+import { Trophy, Coins, Map, RotateCcw, Home, Lock, Wallet, ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { usePayToReveal } from "@/hooks/use-pay-to-reveal"; // Importing custom hook for payment logic
-import { useAccount, useConnect } from "wagmi"; // Wagmi for wallet connection
+import { usePayToReveal } from "@/hooks/use-pay-to-reveal";
+import { useAccount, useConnect } from "wagmi";
 import { PAYMENT_CONFIG } from "@/lib/farcaster/config";
 
 interface GameOverModalProps {
@@ -19,37 +18,35 @@ interface GameOverModalProps {
 export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSubmitScore }: GameOverModalProps) {
   const [playerName, setPlayerName] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const { isRevealed, isProcessing, error, payToReveal, needsPayment, transactionHash } = usePayToReveal();
 
-  // Use Wagmi's useAccount to check if the wallet is connected
-  const { address, isConnected } = useAccount(); // This hook gives you the wallet connection status
-  const { connect, connectors } = useConnect(); // Wagmi hook to connect wallet
+  const { isRevealed, isProcessing, error, payToReveal, txHash, resetPaymentState, needsPayment } = usePayToReveal();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
 
-  // Connect wallet logic using Wagmi
+  // Connect wallet using Wagmi
   const handleConnectWallet = async () => {
     try {
       if (connectors.length > 0) {
         await connect({ connector: connectors[0] });
-        console.log("[v0] Wallet connected using Wagmi");
+        console.log("✅ Wallet connected");
       }
     } catch (err) {
-      console.error("[v0] Failed to connect wallet:", err);
+      console.error("Failed to connect wallet:", err);
     }
   };
 
-  // Handle the "Play Again" button click and send the payment to your wallet
-  const handlePlayAgain = async () => {
+  // Handle payment and start a new round
+  const handlePayAndPlayAgain = async () => {
+    resetPaymentState();
+
     if (!isConnected) {
-      // If wallet is not connected, connect it
       await handleConnectWallet();
-    } else {
-      // If wallet is connected, trigger the payment process
-      console.log("Starting payment process...");
-      await payToReveal(); // Calling the payment function from the custom hook
     }
+
+    console.log("Starting payment process...");
+    await payToReveal();
   };
 
-  // Handle score submission
   const handleSubmit = () => {
     if (playerName.trim()) {
       onSubmitScore(playerName.trim());
@@ -57,7 +54,6 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
     }
   };
 
-  // Show score gate when payment is required
   const showScoreGate = needsPayment && !isRevealed;
 
   return (
@@ -83,8 +79,7 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
 
               {!isConnected ? (
                 <Button onClick={handleConnectWallet} className="w-full gap-2" size="lg">
-                  <Wallet className="w-4 h-4" />
-                  Connect Wallet
+                  <Wallet className="w-4 h-4" /> Connect Wallet
                 </Button>
               ) : (
                 <div className="space-y-3">
@@ -92,16 +87,12 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
                     <div className="font-medium mb-1">Connected Wallet</div>
                     <div className="truncate font-mono">{address}</div>
                   </div>
-                  <Button onClick={handlePlayAgain} disabled={isProcessing} className="w-full" size="lg">
-                    {isProcessing ? (
-                      <span className="animate-spin mr-2">⏳</span>
-                    ) : (
-                      <>Pay {PAYMENT_CONFIG.PAYMENT_AMOUNT} ETH to Reveal</>
-                    )}
+                  <Button onClick={handlePayAndPlayAgain} disabled={isProcessing} className="w-full" size="lg">
+                    {isProcessing ? <span className="animate-spin mr-2">⏳</span> : <>Pay {PAYMENT_CONFIG.PAYMENT_AMOUNT} ETH to Reveal</>}
                   </Button>
-                  {transactionHash && (
+                  {txHash && (
                     <a
-                      href={`https://basescan.org/tx/${transactionHash}`}
+                      href={`https://basescan.org/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-blue-600 hover:underline flex items-center justify-center gap-1"
@@ -140,7 +131,13 @@ export function GameOverModal({ score, coins, distance, onRestart, onMenu, onSub
         )}
 
         <div className="flex gap-3">
-          <Button onClick={onRestart} className="flex-1 gap-2">
+          <Button
+            onClick={() => {
+              resetPaymentState();
+              onRestart();
+            }}
+            className="flex-1 gap-2"
+          >
             <RotateCcw className="w-4 h-4" /> Play Again
           </Button>
           <Button onClick={onMenu} variant="outline" className="flex-1 gap-2 bg-transparent">
