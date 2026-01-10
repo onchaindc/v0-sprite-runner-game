@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
@@ -6,7 +8,6 @@ import "./globals.css"
 
 import { WagmiProvider } from "wagmi"
 import { QueryClientProvider } from "@tanstack/react-query"
-
 import { wagmiConfig, queryClient } from "@/lib/farcaster/wagmi-config"
 import { FarcasterProvider } from "@/lib/farcaster/farcaster-provider"
 
@@ -17,7 +18,8 @@ export const metadata: Metadata = {
   title: "Sprite Runner - Farcaster Mini App",
   description: "Play the endless runner game and compete on the leaderboard",
   generator: "v0.app",
-  other: {"base:app_id": "695ef0cf646908900bbdae0e",
+  other: {
+    "base:app_id": "695ef0cf646908900bbdae0e",
     "fc:miniapp": JSON.stringify({
       version: "1",
       imageUrl: "https://v0-sprite-runner-game.vercel.app/og-image.png",
@@ -35,18 +37,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
+      { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
+      { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
+      { url: "/icon.svg", type: "image/svg+xml" },
     ],
     apple: "/apple-icon.png",
   },
@@ -54,20 +47,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {/* Farcaster MUST initialize first */}
-        <FarcasterProvider>
-          <WagmiProvider config={wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
+        {/* ✅ Correct provider order */}
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <FarcasterProvider>
               {children}
-            </QueryClientProvider>
-          </WagmiProvider>
-        </FarcasterProvider>
+            </FarcasterProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
 
         <Analytics />
       </body>

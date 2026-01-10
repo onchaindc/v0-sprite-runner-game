@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useAccount, useConnect, useSendTransaction } from "wagmi";
 import { parseEther } from "viem";
 
-// Your wallet address
 const RECIPIENT_ADDRESS = "0xE00Ecb51e1bA79731E78D443A90e3AD200107c4b";
-const PAYMENT_AMOUNT = "0.00001"; // ETH
+const PAYMENT_AMOUNT = "0.00001";
 
 interface UsePayToRevealReturn {
   isRevealed: boolean;
@@ -24,35 +23,28 @@ export function usePayToReveal(): UsePayToRevealReturn {
 
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
-  const { sendTransaction, data } = useSendTransaction();
+  const { sendTransactionAsync } = useSendTransaction();
 
   const payToReveal = async () => {
     setError(null);
 
-    // Connect wallet
-    if (!isConnected) {
-      const connector = connectors?.[0];
-      if (!connector) {
-        setError("No wallet connector available");
-        return;
-      }
-      await connect({ connector });
-    }
-
-    setIsProcessing(true);
-
     try {
-      // Fire the transaction
-      await sendTransaction({
+      // Ensure wallet is connected (Farcaster handles UI)
+      if (!isConnected) {
+        const connector = connectors?.[0];
+        if (!connector) throw new Error("No wallet connector");
+        await connect({ connector });
+      }
+
+      setIsProcessing(true);
+
+      // 🔥 THIS LINE TRIGGERS THE FARCASTER WALLET POPUP
+      const hash = await sendTransactionAsync({
         to: RECIPIENT_ADDRESS,
         value: parseEther(PAYMENT_AMOUNT),
       });
 
-      // Wagmi stores the tx hash in `data` (string | undefined)
-      if (!data) throw new Error("Transaction hash not found");
-      setTxHash(data);
-
-      // Reveal after success
+      setTxHash(hash);
       setIsRevealed(true);
     } catch (err: any) {
       if (err?.message?.includes("User rejected")) {
